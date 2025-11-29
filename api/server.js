@@ -2,11 +2,35 @@
 import express from "express";
 import dotenv from "dotenv";
 import { neon } from "@neondatabase/serverless";
-
+import cors from "cors";
 dotenv.config();
 
 const app = express();
 app.use(express.json());
+
+const allowedOrigins = [
+  "http://localhost:8000",      // ou 5173, selon ton dev
+  "https://chartjsproject-vue.vercel.app" // <- remplace par l’URL de ton front
+];
+
+
+app.use(
+  cors({
+    origin(origin, callback) {
+      // autoriser aussi les requêtes sans origin (Postman, curl…)
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
+// Important pour les pré-requêtes OPTIONS (preflight)
+app.options("*", cors());
 
 // Neon connection
 if (!process.env.NEON_DATABASE_URL) {
