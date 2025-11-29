@@ -1,11 +1,1072 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StackOverflow 2023 – Visualisation Chart.js</title>
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    :root {
+      --bg: #0f172a;
+      --bg-card: #111827;
+      --accent: #3b82f6;
+      --accent-soft: rgba(59, 130, 246, 0.15);
+      --text: #e5e7eb;
+      --text-muted: #9ca3af;
+      --border: #1f2937;
+      --danger: #f97373;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+      background: radial-gradient(circle at top left, #1f2937, #020617 60%);
+      color: var(--text);
+    }
+
+    header {
+      padding: 1.5rem 2rem;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      backdrop-filter: blur(12px);
+      background: linear-gradient(
+        to bottom,
+        rgba(15, 23, 42, 0.95),
+        rgba(15, 23, 42, 0.8)
+      );
+      z-index: 10;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.6rem;
+      letter-spacing: 0.03em;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    header h1 span.badge {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      background: var(--accent-soft);
+      color: var(--accent);
+      padding: 0.15rem 0.6rem;
+      border-radius: 999px;
+      border: 1px solid rgba(59, 130, 246, 0.5);
+    }
+
+    header p {
+      margin: 0.35rem 0 0;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    main {
+      padding: 1.5rem 2rem 2.5rem;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.5fr) minmax(0, 3fr);
+      gap: 1.5rem;
+      align-items: flex-start;
+    }
+
+    @media (max-width: 1024px) {
+      .layout {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      header {
+        padding: 1rem 1.25rem;
+      }
+      main {
+        padding: 1rem 1.25rem 2rem;
+      }
+    }
+
+    .card {
+      background: radial-gradient(circle at top right, #020617, #020617 30%),
+        linear-gradient(to bottom, rgba(15, 23, 42, 0.96), #020617);
+      border-radius: 1.25rem;
+      padding: 1.25rem 1.35rem;
+      border: 1px solid rgba(31, 41, 55, 0.9);
+      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.6);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: -30%;
+      background:
+        radial-gradient(circle at 0% 0%, rgba(59, 130, 246, 0.08), transparent 55%),
+        radial-gradient(circle at 100% 100%, rgba(14, 165, 233, 0.04), transparent 55%);
+      opacity: 0.9;
+      pointer-events: none;
+    }
+
+    .card > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .card h2 {
+      margin: 0 0 0.35rem;
+      font-size: 1.05rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+
+    .card h2 span.label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      letter-spacing: 0.08em;
+    }
+
+    .card p {
+      margin: 0.1rem 0 0.75rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .filters-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 0.75rem;
+    }
+
+    .filter {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      min-width: 150px;
+      flex: 1;
+    }
+
+    .filter label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    select,
+    input[type="number"],
+    input[type="range"] {
+      background: rgba(15, 23, 42, 0.9);
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      padding: 0.4rem 0.75rem;
+      color: var(--text);
+      font-size: 0.85rem;
+      outline: none;
+      appearance: none;
+    }
+
+    select:focus,
+    input[type="number"]:focus,
+    input[type="range"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.5);
+    }
+
+    input[type="range"] {
+      padding: 0;
+      cursor: pointer;
+    }
+
+    .range-display {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+
+    @media (max-width: 900px) {
+      .charts-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    canvas {
+      width: 100% !important;
+      height: 260px !important;
+    }
+
+    .status {
+      margin-top: 0.5rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .status span.dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--accent);
+      display: inline-block;
+    }
+
+    .status.error span.dot {
+      background: var(--danger);
+    }
+
+    .status.error {
+      color: var(--danger);
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      border-radius: 999px;
+      padding: 0.15rem 0.55rem;
+      font-size: 0.75rem;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      color: var(--text-muted);
+    }
+
+    .pill strong {
+      color: var(--text);
+    }
+
+    .pill small {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .hint {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+    }
+  </style>
 </head>
 <body>
-    
+  <header>
+    <h1>
+      Visualisation StackOverflow 2023
+      <span class="badge">Chart.js · Neon · Node</span>
+    </h1>
+    <p>
+      Exploration des revenus, technologies et outils des développeurs en Europe et
+      Amérique du Nord à partir des résultats du sondage StackOverflow 2023.
+    </p>
+  </header>
+
+  <main>
+    <div class="layout">
+      <!-- Panneau de filtres globaux -->
+      <section class="card">
+        <h2>
+          Filtres globaux
+          <span class="label">Données &amp; Filtrage</span>
+        </h2>
+        <p>
+          Utilise ces filtres pour ajuster <strong>toutes les visualisations</strong>.
+        </p>
+
+        <div class="filters-group">
+          <div class="filter">
+            <label for="continentSelect">Continent</label>
+            <select id="continentSelect">
+              <option value="all">Tous les continents</option>
+              <option value="Europe">Europe</option>
+              <option value="North America">Amérique du Nord</option>
+            </select>
+          </div>
+
+          <div class="filter">
+            <label for="countrySelect">Pays</label>
+            <select id="countrySelect">
+              <option value="all">Tous les pays</option>
+            </select>
+          </div>
+
+          <div class="filter">
+            <label for="devTypeSelect">Métier (DevType)</label>
+            <select id="devTypeSelect">
+              <option value="all">Tous les métiers</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="filters-group" style="margin-top: 1rem;">
+          <div class="filter">
+            <label for="experienceFilterSelect">Expérience professionnelle</label>
+            <select id="experienceFilterSelect">
+              <option value="all">Toutes</option>
+              <option value="0-2">0–2 ans</option>
+              <option value="3-5">3–5 ans</option>
+              <option value="6-10">6–10 ans</option>
+              <option value="10+">10+ ans</option>
+            </select>
+          </div>
+
+          <div class="filter">
+            <label for="topNRange">Top N (OS & outils)</label>
+            <input id="topNRange" type="range" min="5" max="8" value="5" />
+            <span class="range-display">Top <span id="topNValue">5</span></span>
+          </div>
+        </div>
+
+        <div class="hint">
+          <span class="pill">
+            <small>API</small>
+            <strong>/api/survey-results</strong>
+          </span>
+          <br />
+          Les calculs (revenu moyen, top technologies…) sont faits directement
+          côté navigateur à partir des données brutes.
+        </div>
+
+        <div id="status" class="status">
+          <span class="dot"></span><span>Chargement des données…</span>
+        </div>
+      </section>
+
+      <!-- Grille des graphiques -->
+      <section>
+        <div class="charts-grid">
+          <!-- 1. Revenu vs expérience -->
+          <div class="card">
+            <h2>
+              Revenu moyen vs expérience
+              <span class="label">Focus revenu / expérience</span>
+            </h2>
+            <p>
+              Salaire moyen (en euros) en fonction des années d'expérience
+              professionnelle (<strong>YearsCodePro / WorkExp</strong>).
+            </p>
+            <canvas id="chartExperience"></canvas>
+          </div>
+
+          <!-- 2. Revenu vs niveau d'études -->
+          <div class="card">
+            <h2>
+              Revenu moyen vs niveau d'études
+              <span class="label">Focus revenu / études</span>
+            </h2>
+            <p>
+              Salaire moyen (en euros) selon le niveau d'études
+              (<strong>EdLevel</strong>) pour la sélection actuelle.
+            </p>
+            <canvas id="chartEducation"></canvas>
+          </div>
+
+          <!-- 3. Revenu vs plateformes cloud -->
+          <div class="card">
+            <h2>
+              Revenu moyen vs plateformes cloud
+              <span class="label">Compétences techniques</span>
+            </h2>
+            <p>
+              Revenu moyen par plateforme cloud déclarée
+              (<strong>PlatformHaveWorkedWith</strong>), filtrable par expérience.
+            </p>
+            <canvas id="chartCloud"></canvas>
+          </div>
+
+          <!-- 4. Revenu vs frameworks web -->
+          <div class="card">
+            <h2>
+              Revenu moyen vs frameworks web
+              <span class="label">Compétences techniques</span>
+            </h2>
+            <p>
+              Revenu moyen par framework web
+              (<strong>WebframeHaveWorkedWith</strong>), filtrable par expérience.
+            </p>
+            <canvas id="chartWebframe"></canvas>
+          </div>
+
+          <!-- 5. Top OS professionnels -->
+          <div class="card">
+            <h2>
+              Top systèmes d'exploitation (pro)
+              <span class="label">Technologies les plus utilisées</span>
+            </h2>
+            <p>
+              Top N des systèmes d'exploitation utilisés au travail
+              (<strong>OpSysProfessionaluse</strong>) selon le métier et le
+              continent.
+            </p>
+            <canvas id="chartOS"></canvas>
+          </div>
+
+          <!-- 6. Top outils de communication -->
+          <div class="card">
+            <h2>
+              Top outils de communication
+              <span class="label">Technologies les plus utilisées</span>
+            </h2>
+            <p>
+              Top N des outils de communication
+              (<strong>CommunicationToolsHaveWorkedWith</strong> ou équivalent)
+              selon le métier et le continent.
+            </p>
+            <canvas id="chartComm"></canvas>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    // ==========
+    // Données & état global
+    // ==========
+    let rawData = [];
+    const charts = {};
+
+    const currencyToEurRate = {
+      // À adapter selon les monnaies présentes dans ta table
+      EUR: 1,
+      USD: 0.93,
+      CAD: 0.68,
+      GBP: 1.16,
+      INR: 0.011,
+      AUD: 0.61
+    };
+
+    const europeCountries = new Set([
+      "France", "Germany", "United Kingdom", "UK", "Spain", "Italy", "Portugal",
+      "Netherlands", "Belgium", "Switzerland", "Austria", "Sweden", "Norway",
+      "Denmark", "Finland", "Poland", "Czech Republic", "Czechia", "Ireland",
+      "Greece", "Romania", "Hungary"
+    ]);
+
+    const northAmericaCountries = new Set([
+      "United States of America", "United States", "USA",
+      "Canada", "Mexico"
+    ]);
+
+    // ==========
+    // Utilitaires
+    // ==========
+    function getContinentFromCountry(country) {
+      if (!country) return null;
+      if (europeCountries.has(country)) return "Europe";
+      if (northAmericaCountries.has(country)) return "North America";
+      return null;
+    }
+
+    function toEuro(amount, currency) {
+      if (amount == null || amount === "") return null;
+      const num = Number(amount);
+      if (Number.isNaN(num) || num <= 0) return null;
+
+      const code = (currency || "").split(" ")[0].trim(); // ex: "USD", "EUR"
+      const rate = currencyToEurRate[code] || 1;
+      return num * rate;
+    }
+
+    function parseYears(value) {
+      if (!value) return null;
+      const s = String(value).trim();
+      if (!s) return null;
+
+      if (s.toLowerCase().includes("less than 1")) return 0.5;
+      if (s.toLowerCase().includes("more than")) {
+        const num = parseInt(s.replace(/\D+/g, ""), 10);
+        return Number.isNaN(num) ? 50 : num;
+      }
+
+      const parsed = parseFloat(s.replace(",", "."));
+      if (!Number.isNaN(parsed)) return parsed;
+
+      const m = s.match(/\d+/);
+      return m ? parseFloat(m[0]) : null;
+    }
+
+    function bucketExperience(years) {
+      if (years == null) return null;
+      if (years <= 2) return "0-2";
+      if (years <= 5) return "3-5";
+      if (years <= 10) return "6-10";
+      return "10+";
+    }
+
+    function splitMultiValueField(value) {
+      if (!value) return [];
+      // À adapter si tes listes sont séparées par un autre séparateur (ex: ';' ou ',')
+      return String(value)
+        .split(";")
+        .map((v) => v.trim())
+        .filter((v) => v.length > 0);
+    }
+
+    function updateStatus(message, isError = false) {
+      const statusEl = document.getElementById("status");
+      if (!statusEl) return;
+      statusEl.classList.toggle("error", isError);
+      statusEl.querySelector("span.dot").style.backgroundColor = isError
+        ? "var(--danger)"
+        : "var(--accent)";
+      statusEl.querySelectorAll("span")[1].textContent = message;
+    }
+
+    function renderOrUpdateChart(canvasId, key, config) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+
+      if (charts[key]) {
+        charts[key].data = config.data;
+        charts[key].options = config.options || {};
+        charts[key].update();
+      } else {
+        charts[key] = new Chart(ctx, config);
+      }
+    }
+
+    // ==========
+    // Chargement des données
+    // ==========
+    async function loadData() {
+      try {
+        updateStatus("Chargement des données depuis /api/survey-results…");
+        const res = await fetch("https://chartjsproject-api.vercel.app/api/survey-results?limit=5000");
+        if (!res.ok) {
+          throw new Error("HTTP " + res.status);
+        }
+        const json = await res.json();
+        rawData = json.data || [];
+
+        updateStatus(`Données chargées (${rawData.length} réponses).`);
+        initFiltersFromData();
+        updateAllCharts();
+      } catch (err) {
+        console.error(err);
+        updateStatus(
+          "Erreur lors du chargement de /api/survey-results",
+          true
+        );
+      }
+    }
+
+    // ==========
+    // Filtres
+    // ==========
+    function initFiltersFromData() {
+      const countrySelect = document.getElementById("countrySelect");
+      const devTypeSelect = document.getElementById("devTypeSelect");
+
+      const countries = new Set();
+      const devTypes = new Set();
+
+      rawData.forEach((row) => {
+        if (row.Country) countries.add(row.Country);
+
+        if (row.DevType) {
+          splitMultiValueField(row.DevType).forEach((t) => devTypes.add(t));
+        }
+      });
+
+      // Pays
+      countrySelect.innerHTML = '<option value="all">Tous les pays</option>';
+      Array.from(countries)
+        .sort()
+        .forEach((c) => {
+          const opt = document.createElement("option");
+          opt.value = c;
+          opt.textContent = c;
+          countrySelect.appendChild(opt);
+        });
+
+      // DevType
+      devTypeSelect.innerHTML =
+        '<option value="all">Tous les métiers</option>';
+      Array.from(devTypes)
+        .sort()
+        .forEach((t) => {
+          const opt = document.createElement("option");
+          opt.value = t;
+          opt.textContent = t;
+          devTypeSelect.appendChild(opt);
+        });
+    }
+
+    function getCurrentFilters() {
+      const continent = document.getElementById("continentSelect").value;
+      const country = document.getElementById("countrySelect").value;
+      const devType = document.getElementById("devTypeSelect").value;
+      const experienceBucket =
+        document.getElementById("experienceFilterSelect").value;
+      const topN = parseInt(
+        document.getElementById("topNRange").value,
+        10
+      );
+
+      return { continent, country, devType, experienceBucket, topN };
+    }
+
+    function filterBaseData({ continent, country, devType }) {
+      return rawData.filter((row) => {
+        if (country !== "all" && row.Country !== country) return false;
+
+        if (continent !== "all") {
+          const inferred = getContinentFromCountry(row.Country);
+          if (inferred !== continent) return false;
+        }
+
+        if (devType !== "all") {
+          const devTypes = splitMultiValueField(row.DevType);
+          if (!devTypes.includes(devType)) return false;
+        }
+
+        return true;
+      });
+    }
+
+    // ==========
+    // Calculs pour les graphiques
+    // ==========
+
+    // 1) Revenu moyen vs expérience
+    function updateExperienceChart(filtered) {
+      const aggregates = {};
+
+      filtered.forEach((row) => {
+        const years =
+          parseYears(row.YearsCodePro) ?? parseYears(row.WorkExp);
+        const bucket = bucketExperience(years);
+        const euro = toEuro(row.CompTotal, row.Currency);
+
+        if (!bucket || euro == null) return;
+
+        if (!aggregates[bucket]) {
+          aggregates[bucket] = { sum: 0, count: 0 };
+        }
+        aggregates[bucket].sum += euro;
+        aggregates[bucket].count += 1;
+      });
+
+      const order = ["0-2", "3-5", "6-10", "10+"];
+      const labels = [];
+      const values = [];
+
+      order.forEach((b) => {
+        if (aggregates[b]) {
+          labels.push(b);
+          values.push(
+            Math.round(aggregates[b].sum / aggregates[b].count)
+          );
+        }
+      });
+
+      const config = {
+        type: "line",
+        data: {
+          labels,
+          datasets: [
+            {
+              label: "Salaire moyen (€)",
+              data: values,
+              tension: 0.3,
+              fill: true,
+              borderWidth: 2,
+              pointRadius: 4
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: true },
+            tooltip: {
+              callbacks: {
+                label: (ctx) =>
+                  ctx.parsed.y.toLocaleString("fr-FR", {
+                    maximumFractionDigits: 0
+                  }) + " €"
+              }
+            }
+          },
+          scales: {
+            y: {
+              ticks: {
+                callback: (v) =>
+                  v.toLocaleString("fr-FR", { maximumFractionDigits: 0 }) + " €"
+              }
+            }
+          }
+        }
+      };
+
+      renderOrUpdateChart("chartExperience", "experience", config);
+    }
+
+    // 2) Revenu moyen vs niveau d'études
+    function updateEducationChart(filtered) {
+      const aggregates = {};
+
+      filtered.forEach((row) => {
+        const ed = row.EdLevel || "Non renseigné";
+        const euro = toEuro(row.CompTotal, row.Currency);
+        if (euro == null) return;
+
+        if (!aggregates[ed]) {
+          aggregates[ed] = { sum: 0, count: 0 };
+        }
+        aggregates[ed].sum += euro;
+        aggregates[ed].count += 1;
+      });
+
+      const entries = Object.entries(aggregates).sort(
+        (a, b) => b[1].sum / b[1].count - a[1].sum / a[1].count
+      );
+
+      const labels = entries.map(([key]) => key);
+      const values = entries.map(([_, v]) =>
+        Math.round(v.sum / v.count)
+      );
+
+      const config = {
+        type: "bar",
+        data: {
+          labels,
+          datasets: [
+            {
+              label: "Salaire moyen (€)",
+              data: values,
+              borderWidth: 1
+            }
+          ]
+        },
+        options: {
+          indexAxis: "y",
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (ctx) =>
+                  ctx.parsed.x.toLocaleString("fr-FR", {
+                    maximumFractionDigits: 0
+                  }) + " €"
+              }
+            }
+          },
+          scales: {
+            x: {
+              ticks: {
+                callback: (v) =>
+                  v.toLocaleString("fr-FR", { maximumFractionDigits: 0 }) + " €"
+              }
+            }
+          }
+        }
+      };
+
+      renderOrUpdateChart("chartEducation", "education", config);
+    }
+
+    // 3) Revenu moyen vs plateformes cloud
+    function updateCloudChart(filtered, experienceBucket) {
+      const aggregates = {};
+
+      filtered.forEach((row) => {
+        const years =
+          parseYears(row.YearsCodePro) ?? parseYears(row.WorkExp);
+        const bucket = bucketExperience(years);
+        if (experienceBucket !== "all" && bucket !== experienceBucket)
+          return;
+
+        const euro = toEuro(row.CompTotal, row.Currency);
+        if (euro == null) return;
+
+        const platforms = splitMultiValueField(row.PlatformHaveWorkedWith);
+        platforms.forEach((p) => {
+          if (!aggregates[p]) {
+            aggregates[p] = { sum: 0, count: 0 };
+          }
+          aggregates[p].sum += euro;
+          aggregates[p].count += 1;
+        });
+      });
+
+      const entries = Object.entries(aggregates)
+        .filter(([_, v]) => v.count >= 5) // pour éviter le bruit
+        .sort((a, b) => b[1].sum / b[1].count - a[1].sum / a[1].count)
+        .slice(0, 10);
+
+      const labels = entries.map(([k]) => k);
+      const values = entries.map(([_, v]) =>
+        Math.round(v.sum / v.count)
+      );
+
+      const config = {
+        type: "bar",
+        data: {
+          labels,
+          datasets: [
+            {
+              label: "Salaire moyen (€)",
+              data: values,
+              borderWidth: 1
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (ctx) =>
+                  ctx.parsed.y.toLocaleString("fr-FR", {
+                    maximumFractionDigits: 0
+                  }) + " €"
+              }
+            }
+          },
+          scales: {
+            y: {
+              ticks: {
+                callback: (v) =>
+                  v.toLocaleString("fr-FR", { maximumFractionDigits: 0 }) + " €"
+              }
+            }
+          }
+        }
+      };
+
+      renderOrUpdateChart("chartCloud", "cloud", config);
+    }
+
+    // 4) Revenu moyen vs frameworks web
+    function updateWebframeChart(filtered, experienceBucket) {
+      const aggregates = {};
+
+      filtered.forEach((row) => {
+        const years =
+          parseYears(row.YearsCodePro) ?? parseYears(row.WorkExp);
+        const bucket = bucketExperience(years);
+        if (experienceBucket !== "all" && bucket !== experienceBucket)
+          return;
+
+        const euro = toEuro(row.CompTotal, row.Currency);
+        if (euro == null) return;
+
+        const frames = splitMultiValueField(row.WebframeHaveWorkedWith);
+        frames.forEach((f) => {
+          if (!aggregates[f]) {
+            aggregates[f] = { sum: 0, count: 0 };
+          }
+          aggregates[f].sum += euro;
+          aggregates[f].count += 1;
+        });
+      });
+
+      const entries = Object.entries(aggregates)
+        .filter(([_, v]) => v.count >= 5)
+        .sort((a, b) => b[1].sum / b[1].count - a[1].sum / a[1].count)
+        .slice(0, 10);
+
+      const labels = entries.map(([k]) => k);
+      const values = entries.map(([_, v]) =>
+        Math.round(v.sum / v.count)
+      );
+
+      const config = {
+        type: "bar",
+        data: {
+          labels,
+          datasets: [
+            {
+              label: "Salaire moyen (€)",
+              data: values,
+              borderWidth: 1
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (ctx) =>
+                  ctx.parsed.y.toLocaleString("fr-FR", {
+                    maximumFractionDigits: 0
+                  }) + " €"
+              }
+            }
+          },
+          scales: {
+            y: {
+              ticks: {
+                callback: (v) =>
+                  v.toLocaleString("fr-FR", { maximumFractionDigits: 0 }) + " €"
+              }
+            }
+          }
+        }
+      };
+
+      renderOrUpdateChart("chartWebframe", "webframe", config);
+    }
+
+    // 5) Top OS professionnels
+    function updateOSChart(filtered, topN) {
+      const counts = {};
+
+      filtered.forEach((row) => {
+        const oss = splitMultiValueField(row.OpSysProfessionaluse);
+        oss.forEach((os) => {
+          counts[os] = (counts[os] || 0) + 1;
+        });
+      });
+
+      const entries = Object.entries(counts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, topN);
+
+      const labels = entries.map(([k]) => k);
+      const values = entries.map(([_, v]) => v);
+
+      const config = {
+        type: "bar",
+        data: {
+          labels,
+          datasets: [
+            {
+              label: "Nombre de réponses",
+              data: values,
+              borderWidth: 1
+            }
+          ]
+        },
+        options: {
+          indexAxis: "y",
+          responsive: true,
+          plugins: {
+            legend: { display: false }
+          }
+        }
+      };
+
+      renderOrUpdateChart("chartOS", "os", config);
+    }
+
+    // 6) Top outils de communication
+    function updateCommChart(filtered, topN) {
+      const counts = {};
+
+      filtered.forEach((row) => {
+        // À adapter si ta colonne a un autre nom
+        const tools = splitMultiValueField(
+          row.CommunicationToolsHaveWorkedWith ||
+            row.CommunicationTools
+        );
+        tools.forEach((t) => {
+          counts[t] = (counts[t] || 0) + 1;
+        });
+      });
+
+      const entries = Object.entries(counts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, topN);
+
+      const labels = entries.map(([k]) => k);
+      const values = entries.map(([_, v]) => v);
+
+      const config = {
+        type: "bar",
+        data: {
+          labels,
+          datasets: [
+            {
+              label: "Nombre de réponses",
+              data: values,
+              borderWidth: 1
+            }
+          ]
+        },
+        options: {
+          indexAxis: "y",
+          responsive: true,
+          plugins: {
+            legend: { display: false }
+          }
+        }
+      };
+
+      renderOrUpdateChart("chartComm", "comm", config);
+    }
+
+    // ==========
+    // Mise à jour globale
+    // ==========
+    function updateAllCharts() {
+      if (!rawData.length) return;
+      const filters = getCurrentFilters();
+      const baseFiltered = filterBaseData(filters);
+
+      updateExperienceChart(baseFiltered);
+      updateEducationChart(baseFiltered);
+      updateCloudChart(baseFiltered, filters.experienceBucket);
+      updateWebframeChart(baseFiltered, filters.experienceBucket);
+      updateOSChart(baseFiltered, filters.topN);
+      updateCommChart(baseFiltered, filters.topN);
+    }
+
+    // ==========
+    // Init
+    // ==========
+    function initUIEvents() {
+      document
+        .getElementById("continentSelect")
+        .addEventListener("change", updateAllCharts);
+      document
+        .getElementById("countrySelect")
+        .addEventListener("change", updateAllCharts);
+      document
+        .getElementById("devTypeSelect")
+        .addEventListener("change", updateAllCharts);
+      document
+        .getElementById("experienceFilterSelect")
+        .addEventListener("change", updateAllCharts);
+
+      const topNRange = document.getElementById("topNRange");
+      const topNValue = document.getElementById("topNValue");
+      topNRange.addEventListener("input", () => {
+        topNValue.textContent = topNRange.value;
+        updateAllCharts();
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      initUIEvents();
+      loadData();
+    });
+  </script>
 </body>
 </html>
