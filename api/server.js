@@ -15,30 +15,15 @@ if (!process.env.NEON_DATABASE_URL) {
 }
 const sql = neon(process.env.NEON_DATABASE_URL);
 
-// Simple auth middleware (Bearer token)
-const requireAuth = (req, res, next) => {
-  const authHeader = req.headers["authorization"];
+// Test route (no DB)
+app.get("/api/ping", (req, res) => {
+  console.log("Ping route set up");
 
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({ error: "Missing or invalid Authorization header" });
-  }
-
-  const token = authHeader.replace("Bearer ", "").trim();
-
-  if (token !== process.env.API_TOKEN) {
-    return res.status(403).json({ error: "Invalid API token" });
-  }
-
-  next();
-};
-
-// Test route (no DB) just to check auth works
-app.get("/api/ping", requireAuth, (req, res) => {
-  res.json({ ok: true, message: "Auth works 🎉" });
+  res.json({ ok: true, message: "OK" });
 });
 
-// Protected route querying your Neon table
-app.get("/api/survey-results", requireAuth, async (req, res) => {
+// Route querying your Neon table
+app.get("/api/survey-results", async (req, res) => {
   try {
     // optional ?limit=50
     const limit = Number(req.query.limit) || 10;
