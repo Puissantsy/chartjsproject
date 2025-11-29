@@ -10,7 +10,8 @@ app.use(express.json());
 
 const allowedOrigins = [
   "http://localhost:8000",      // ou 5173, selon ton dev
-  "https://chartjsproject-vue.vercel.app" // <- remplace par l’URL de ton front
+  "https://chartjsproject-vue.vercel.app", // <- remplace par l’URL de ton front
+  "https://chartjsproject-vue.vercel.app/"
 ];
 
 
