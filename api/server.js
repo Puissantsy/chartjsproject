@@ -7,24 +7,27 @@ dotenv.config();
 
 const app = express();
 app.use(express.json());
-app.use(cors());
+
 
 const allowedOrigins = [
-  "http://localhost:8000",      // ou 5173, selon ton dev
-  "https://chartjsproject-vue.vercel.app", // <- remplace par l’URL de ton front
-  "https://chartjsproject-vue-puissantsys-projects.vercel.app/",
-  "https://chartjsproject-vue-git-main-puissantsys-projects.vercel.app/",
-  "https://chartjsproject-9f0o7cnwt-puissantsys-projects.vercel.app/"
+  "http://localhost:8000",
 ];
 
+function isAllowedOrigin(origin) {
+  if (!origin) return true; // curl, Postman, etc.
+  if (allowedOrigins.includes(origin)) return true;
+  if (origin.endsWith(".vercel.app")) return true; // accepte toutes tes préviews Vercel
+  return false;
+}
 
 app.use(
   cors({
     origin(origin, callback) {
-      // autoriser aussi les requêtes sans origin (Postman, curl…)
-      if (!origin || allowedOrigins.includes(origin)) {
+      console.log("CORS Origin reçu:", origin);
+      if (isAllowedOrigin(origin)) {
         callback(null, true);
       } else {
+        console.log("Origin NON autorisée:", origin);
         callback(new Error("Not allowed by CORS"));
       }
     },
@@ -33,8 +36,6 @@ app.use(
   })
 );
 
-// Important pour les pré-requêtes OPTIONS (preflight)
-app.options("*", cors());
 
 // Neon connection
 if (!process.env.NEON_DATABASE_URL) {
