@@ -2,8 +2,7 @@ import { state } from "./state.js";
 import { updateStatus } from "./utils.js";
 // IMPORTANT: le fichier doit être SERVI en HTTP (ex: placé dans /public)
 // Exemple: public/data/test/output.jsonl  =>  "/data/test/output.jsonl"
-const DATA_URL = "../data/output.jsonl";
-
+const DATA_URL = "../../public/data/output.jsonl";
 export async function loadData() {
   try {
     updateStatus("Chargement des données...", "loading");
