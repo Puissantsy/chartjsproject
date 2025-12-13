@@ -44,20 +44,18 @@ export function updateCommChart(filtered, topN) {
   const labels = entries.map(([k]) => k);
   const values = entries.map(([_, v]) => v);
 
+  const colors = colorPalettes.primary.slice(0, labels.length);
+
   const config = {
-    type: "radar",
+    type: "bar",
     data: {
       labels,
       datasets: [{
         label: "Nombre d'utilisations",
         data: values,
-        borderColor: colorPalettes.primary[0],
-        backgroundColor: colorPalettes.primary[0] + "40",
-        borderWidth: 2,
-        pointBackgroundColor: colorPalettes.primary[0],
-        pointBorderColor: "#fff",
-        pointRadius: 4,
-        pointHoverRadius: 6
+        backgroundColor: colors,
+        borderWidth: 0,
+        borderRadius: 8
       }]
     },
     options: {
@@ -69,22 +67,22 @@ export function updateCommChart(filtered, topN) {
           backgroundColor: "rgba(0, 0, 0, 0.8)",
           padding: 12,
           callbacks: {
-            label: (ctx) => `${ctx.label}: ${ctx.parsed.r} réponses`
+            label: (ctx) =>
+              `${ctx.label}: ${ctx.parsed.y.toLocaleString("fr-FR")} réponses`
           }
         }
       },
       scales: {
-        r: {
-          grid: { color: "rgba(255, 255, 255, 0.1)" },
-          angleLines: { color: "rgba(255, 255, 255, 0.1)" },
-          pointLabels: {
-            color: "#cbd5e1",
-            font: { size: 11 }
-          },
+        x: {
+          ticks: { color: "#cbd5e1" },
+          grid: { display: false }
+        },
+        y: {
           ticks: {
-            color: "#94a3b8",
-            backdropColor: "transparent"
-          }
+            color: "#cbd5e1",
+            callback: (v) => v.toLocaleString("fr-FR")
+          },
+          grid: { color: "rgba(255,255,255,0.05)" }
         }
       }
     }

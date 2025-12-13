@@ -1,4 +1,4 @@
-import {bucketExperience, toEuro,generateColors, parseYears, splitMultiValueField } from "../utils.js";
+import {bucketExperience, toEuro, parseYears, splitMultiValueField } from "../utils.js";
 import { renderOrUpdateChart } from "../chartRenderer.js";
 
 export function updateCloudChart(filtered, experienceBucket) {
@@ -27,18 +27,32 @@ export function updateCloudChart(filtered, experienceBucket) {
     .sort((a, b) => b[1].sum / b[1].count - a[1].sum / a[1].count)
     .slice(0, 8);
 
-  const labels = entries.map(([k]) => k);
-  const values = entries.map(([_, v]) => Math.round(v.sum / v.count));
-  const colors = generateColors(entries.length, 'warning');
+  const bubbles = entries.map(([label, v], index) => ({
+    x: index + 1,
+    y: Math.round(v.sum / v.count),
+    r: Math.min(30, Math.max(8, Math.sqrt(v.count) * 2)),
+    label
+  }));
+
+  const colors = [
+    "#3b82f6", // bleu
+    "#22c55e", // vert
+    "#f59e0b", // orange
+    "#a855f7", // violet
+    "#06b6d4", // cyan
+    "#ef4444", // rouge
+    "#eab308", // jaune
+    "#64748b"  // gris
+  ].slice(0, entries.length);
+
 
   const config = {
-    type: "polarArea",
+    type: "bubble",
     data: {
-      labels,
       datasets: [{
-        label: "Salaire moyen (€)",
-        data: values,
-        backgroundColor: colors.map(c => c + '80'),
+        label: "Plateformes Cloud",
+        data: bubbles,
+        backgroundColor: colors.map(c => c + "80"),
         borderColor: colors,
         borderWidth: 2
       }]
@@ -47,29 +61,39 @@ export function updateCloudChart(filtered, experienceBucket) {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { 
-          display: true,
-          position: 'right',
-          labels: { 
-            color: '#cbd5e1',
-            font: { size: 10 },
-            padding: 8
-          }
-        },
+        legend: { display: false },
         tooltip: {
-          backgroundColor: 'rgba(0, 0, 0, 0.8)',
-          padding: 12,
           callbacks: {
-            label: (ctx) => `${ctx.label}: ${ctx.parsed.r.toLocaleString('fr-FR')} €`
+            label: (ctx) => {
+              const d = ctx.raw;
+              return [
+                `Plateforme : ${d.label}`,
+                `Revenu moyen : ${d.y.toLocaleString("fr-FR")} €`,
+                `Répondants : ${Math.round((d.r / 2) ** 2)}`
+              ];
+            }
           }
         }
       },
       scales: {
-        r: {
-          grid: { color: 'rgba(255, 255, 255, 0.05)' },
-          ticks: { 
-            color: '#94a3b8',
-            backdropColor: 'transparent'
+        x: {
+          title: {
+            display: true,
+            text: "Plateformes Cloud"
+          },
+          ticks: {
+            callback: (_, index) => bubbles[index]?.label ?? "",
+            color: "#cbd5e1",
+            maxRotation: 25,
+            minRotation: 25
+          },
+          grid: { display: false },
+          offset: true
+        },
+        y: {
+          min: 0,
+          ticks: {
+            callback: v => `${v.toLocaleString("fr-FR")} €`
           }
         }
       }
