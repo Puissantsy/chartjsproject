@@ -4,348 +4,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>StackOverflow 2023 – Analyse des Développeurs</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    :root {
-      --primary: #2563eb;
-      --primary-light: #3b82f6;
-      --primary-dark: #1d4ed8;
-      --secondary: #10b981;
-      --accent: #f59e0b;
-      --danger: #ef4444;
-      --bg-main: #0f172a;
-      --bg-card: #1e293b;
-      --bg-hover: #334155;
-      --text-primary: #f1f5f9;
-      --text-secondary: #cbd5e1;
-      --text-muted: #94a3b8;
-      --border: #334155;
-      --shadow: rgba(0, 0, 0, 0.3);
-    }
-
-    body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-      color: var(--text-primary);
-      line-height: 1.6;
-      min-height: 100vh;
-    }
-
-    /* Header */
-    .header {
-      background: rgba(30, 41, 59, 0.8);
-      backdrop-filter: blur(10px);
-      border-bottom: 1px solid var(--border);
-      padding: 1.5rem 2rem;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      box-shadow: 0 4px 6px var(--shadow);
-    }
-
-    .header-content {
-      max-width: 1600px;
-      margin: 0 auto;
-    }
-
-    .header h1 {
-      font-size: 1.75rem;
-      font-weight: 700;
-      margin-bottom: 0.5rem;
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-
-    .badge {
-      font-size: 0.7rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      background: linear-gradient(135deg, var(--primary), var(--primary-light));
-      color: white;
-      padding: 0.25rem 0.75rem;
-      border-radius: 9999px;
-      letter-spacing: 0.05em;
-    }
-
-    .header p {
-      color: var(--text-secondary);
-      font-size: 0.95rem;
-    }
-
-    /* Main Container */
-    .container {
-      max-width: 1600px;
-      margin: 0 auto;
-      padding: 2rem;
-    }
-
-    /* Global Filters Section */
-    .filters-section {
-      background: var(--bg-card);
-      border-radius: 1rem;
-      padding: 1.5rem;
-      margin-bottom: 2rem;
-      border: 1px solid var(--border);
-      box-shadow: 0 4px 12px var(--shadow);
-    }
-
-    .filters-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1.25rem;
-    }
-
-    .filters-header h2 {
-      font-size: 1.25rem;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .icon {
-      width: 20px;
-      height: 20px;
-    }
-
-    .status-badge {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.4rem 0.8rem;
-      border-radius: 9999px;
-      font-size: 0.85rem;
-      font-weight: 500;
-    }
-
-    .status-badge.loading {
-      background: rgba(59, 130, 246, 0.2);
-      color: var(--primary-light);
-    }
-
-    .status-badge.success {
-      background: rgba(16, 185, 129, 0.2);
-      color: var(--secondary);
-    }
-
-    .status-badge.error {
-      background: rgba(239, 68, 68, 0.2);
-      color: var(--danger);
-    }
-
-    .status-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: currentColor;
-      animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
-    }
-
-    .filters-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1rem;
-    }
-
-    .filter-group {
-      display: flex;
-      flex-direction: column;
-      gap: 0.4rem;
-    }
-
-    .filter-label {
-      font-size: 0.8rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--text-muted);
-    }
-
-    select, input[type="number"] {
-      background: var(--bg-main);
-      border: 1px solid var(--border);
-      border-radius: 0.5rem;
-      padding: 0.6rem 0.8rem;
-      color: var(--text-primary);
-      font-size: 0.9rem;
-      transition: all 0.2s;
-      cursor: pointer;
-    }
-
-    select:hover, input:hover {
-      border-color: var(--primary-light);
-    }
-
-    select:focus, input:focus {
-      outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-    }
-
-    /* Charts Grid */
-    .charts-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
-      gap: 1.5rem;
-      margin-bottom: 2rem;
-    }
-
-    @media (max-width: 1200px) {
-      .charts-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    /* Card */
-    .chart-card {
-      background: var(--bg-card);
-      border-radius: 1rem;
-      padding: 1.5rem;
-      border: 1px solid var(--border);
-      box-shadow: 0 4px 12px var(--shadow);
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-
-    .chart-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
-    }
-
-    .chart-header {
-      margin-bottom: 1rem;
-    }
-
-    .chart-title {
-      font-size: 1.1rem;
-      font-weight: 600;
-      margin-bottom: 0.3rem;
-      color: var(--text-primary);
-    }
-
-    .chart-subtitle {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      line-height: 1.4;
-    }
-
-    .chart-filters {
-      display: flex;
-      gap: 0.75rem;
-      margin-top: 1rem;
-      padding-top: 1rem;
-      border-top: 1px solid var(--border);
-    }
-
-    .chart-filters .filter-group {
-      flex: 1;
-    }
-
-    .chart-container {
-      position: relative;
-      height: 320px;
-      margin-top: 1rem;
-    }
-
-    canvas {
-      max-height: 100%;
-    }
-
-    /* Info Box */
-    .info-box {
-      background: rgba(37, 99, 235, 0.1);
-      border: 1px solid rgba(37, 99, 235, 0.3);
-      border-radius: 0.5rem;
-      padding: 0.75rem 1rem;
-      margin-top: 1rem;
-      font-size: 0.85rem;
-      color: var(--text-secondary);
-    }
-
-    /* Section Header */
-    .section-header {
-      margin: 2.5rem 0 1.5rem;
-      padding-bottom: 0.75rem;
-      border-bottom: 2px solid var(--border);
-    }
-
-    .section-header h2 {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: var(--text-primary);
-    }
-
-    .section-header p {
-      color: var(--text-muted);
-      font-size: 0.9rem;
-      margin-top: 0.25rem;
-    }
-
-    /* Loading State */
-    .loading-skeleton {
-      background: linear-gradient(90deg, var(--bg-hover) 25%, var(--bg-card) 50%, var(--bg-hover) 75%);
-      background-size: 200% 100%;
-      animation: loading 1.5s infinite;
-      border-radius: 0.5rem;
-      height: 320px;
-    }
-
-    @keyframes loading {
-      0% { background-position: 200% 0; }
-      100% { background-position: -200% 0; }
-    }
-
-    /* Responsive */
-    @media (max-width: 768px) {
-      .container {
-        padding: 1rem;
-      }
-      
-      .header {
-        padding: 1rem;
-      }
-      
-      .header h1 {
-        font-size: 1.25rem;
-      }
-      
-      .filters-grid {
-        grid-template-columns: 1fr;
-      }
-      
-      .charts-grid {
-        grid-template-columns: 1fr;
-      }
-      
-      .chart-filters {
-        flex-direction: column;
-      }
-    }
-
-    /* Empty State */
-    .empty-state {
-      text-align: center;
-      padding: 3rem 1rem;
-      color: var(--text-muted);
-    }
-
-    .empty-state-icon {
-      font-size: 3rem;
-      margin-bottom: 1rem;
-      opacity: 0.5;
-    }
-  </style>
+  <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
   <header class="header">
@@ -391,12 +50,7 @@
           </select>
         </div>
 
-        <div class="filter-group">
-          <label class="filter-label" for="devTypeSelect">Métier (DevType)</label>
-          <select id="devTypeSelect">
-            <option value="all">Tous les métiers</option>
-          </select>
-        </div>
+    
       </div>
 
       <div class="info-box">
@@ -494,6 +148,19 @@
       <p>Systèmes d'exploitation et outils de communication par métier</p>
     </div>
 
+    <!-- Filtres Section 3 (communs) -->
+    <div class="filters-section" style="margin-bottom: 1.5rem;">
+      <div class="filters-grid">
+        <div class="filter-group">
+          <label class="filter-label" for="devTypeSelect">Métier (DevType)</label>
+          <select id="devTypeSelect">
+            <option value="all">Tous les métiers</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    
     <div class="charts-grid">
       <!-- Chart 5: Top OS -->
       <div class="chart-card">
@@ -505,16 +172,18 @@
           <canvas id="chartOS"></canvas>
         </div>
         <div class="chart-filters">
-          <div class="filter-group">
-            <label class="filter-label" for="osTopN">Afficher le top</label>
-            <select id="osTopN">
-              <option value="5">Top 5</option>
-              <option value="6">Top 6</option>
-              <option value="7">Top 7</option>
-              <option value="8">Top 8</option>
-            </select>
-          </div>
+        
+        <div class="filter-group">
+          <label class="filter-label" for="osTopN">Afficher le top</label>
+          <select id="osTopN">
+            <option value="5">Top 5</option>
+            <option value="6">Top 6</option>
+            <option value="7">Top 7</option>
+            <option value="8">Top 8</option>
+          </select>
         </div>
+      </div>
+
       </div>
 
       <!-- Chart 6: Top Communication -->
@@ -527,9 +196,11 @@
           <canvas id="chartComm"></canvas>
         </div>
         <div class="chart-filters">
+          
+
           <div class="filter-group">
-            <label class="filter-label" for="commTopN">Afficher le top</label>
-            <select id="commTopN">
+            <label class="filter-label" for="osTopN">Afficher le top</label>
+            <select id="osTopN">
               <option value="5">Top 5</option>
               <option value="6">Top 6</option>
               <option value="7">Top 7</option>
@@ -537,6 +208,7 @@
             </select>
           </div>
         </div>
+
       </div>
     </div>
   </main>

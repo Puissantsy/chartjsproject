@@ -1,19 +1,36 @@
-import { splitMultiValueField } from "../utils.js";
+import { state } from "../state.js";
+import { getContinentFromCountry, isProfessional, splitMultiValueField } from "../utils.js";
 import { renderOrUpdateChart } from "../chartRenderer.js";
 import { colorPalettes } from "../config.js";
 
-
 export function updateCommChart(filtered, topN) {
+  // Le sujet demande : top outils de communication... en fonction du métier (DevType)
+  // et du continent (PAS le pays). On repart donc de state.rawData.
+  const continent = document.getElementById("continentSelect")?.value ?? "all";
+  const devType = document.getElementById("devTypeSelect")?.value ?? "all";
+
+  const base = state.rawData.filter((row) => {
+    if (!isProfessional(row)) return false;
+    if (continent !== "all") {
+      const inferred = getContinentFromCountry(row.Country);
+      if (inferred !== continent) return false;
+    }
+    if (devType !== "all") {
+      const devTypes = splitMultiValueField(row.DevType);
+      if (!devTypes.includes(devType)) return false;
+    }
+    return true;
+  });
+
   const counts = {};
 
-  filtered.forEach((row) => {
-    // On récupère tous les outils (async + sync, have + want)
+  base.forEach((row) => {
     const tools = [
       ...splitMultiValueField(row.OfficeStackAsyncHaveWorkedWith),
       ...splitMultiValueField(row.OfficeStackSyncHaveWorkedWith),
     ]
       .map((t) => t.trim())
-      .filter((t) => t && t !== "NA"); // on enlève les vides / NA éventuels
+      .filter((t) => t && t !== "NA");
 
     tools.forEach((t) => {
       counts[t] = (counts[t] || 0) + 1;
@@ -35,10 +52,10 @@ export function updateCommChart(filtered, topN) {
         label: "Nombre d'utilisations",
         data: values,
         borderColor: colorPalettes.primary[0],
-        backgroundColor: colorPalettes.primary[0] + '40',
+        backgroundColor: colorPalettes.primary[0] + "40",
         borderWidth: 2,
         pointBackgroundColor: colorPalettes.primary[0],
-        pointBorderColor: '#fff',
+        pointBorderColor: "#fff",
         pointRadius: 4,
         pointHoverRadius: 6
       }]
@@ -49,7 +66,7 @@ export function updateCommChart(filtered, topN) {
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          backgroundColor: "rgba(0, 0, 0, 0.8)",
           padding: 12,
           callbacks: {
             label: (ctx) => `${ctx.label}: ${ctx.parsed.r} réponses`
@@ -58,15 +75,15 @@ export function updateCommChart(filtered, topN) {
       },
       scales: {
         r: {
-          grid: { color: 'rgba(255, 255, 255, 0.1)' },
-          angleLines: { color: 'rgba(255, 255, 255, 0.1)' },
+          grid: { color: "rgba(255, 255, 255, 0.1)" },
+          angleLines: { color: "rgba(255, 255, 255, 0.1)" },
           pointLabels: {
-            color: '#cbd5e1',
+            color: "#cbd5e1",
             font: { size: 11 }
           },
           ticks: {
-            color: '#94a3b8',
-            backdropColor: 'transparent'
+            color: "#94a3b8",
+            backdropColor: "transparent"
           }
         }
       }

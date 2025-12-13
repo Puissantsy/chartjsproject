@@ -1,5 +1,9 @@
 import { currencyToEurRate, europeCountries, northAmericaCountries, colorPalettes } from "./config.js";
 
+export function isProfessional(row) {
+  return row?.MainBranch === "I am a developer by profession";
+}
+
 export function getContinentFromCountry(country) {
   if (!country) return null;
   if (europeCountries.has(country)) return "Europe";
@@ -37,11 +41,15 @@ export function parseYears(value) {
 
 export function bucketExperience(years) {
   if (years == null) return null;
-  if (years <= 2) return "0-2";
-  if (years <= 5) return "3-5";
-  if (years <= 10) return "6-10";
-  return "10+";
+
+  if (years < 5) return "0-5";
+  if (years <= 10) return "5-10";
+  if (years <= 15) return "11-15";
+  if (years <= 20) return "16-20";
+  if (years <= 30) return "21-30";
+  return "31+";
 }
+
 
 export function splitMultiValueField(value) {
   if (!value) return [];

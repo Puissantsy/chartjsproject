@@ -1,72 +1,134 @@
-import { bucketExperience, parseYears, toEuro } from "../utils.js";
+import { parseYears, toEuro } from "../utils.js";
 import { renderOrUpdateChart } from "../chartRenderer.js";
 import { colorPalettes } from "../config.js";
 
 export function updateExperienceChart(filtered) {
-  const aggregates = {};
+  // sum, sumSq, count pour moyenne + écart-type
+  const agg = {};
+  for (let y = 1; y <= 50; y++) agg[y] = { sum: 0, sumSq: 0, count: 0 };
 
   filtered.forEach((row) => {
-    const years = parseYears(row.YearsCodePro) ?? parseYears(row.WorkExp);
-    const bucket = bucketExperience(years);
+    const yearsRaw = parseYears(row.YearsCodePro) ?? parseYears(row.WorkExp);
     const euro = toEuro(row.CompTotal, row.Currency);
-    if (!bucket || euro == null) return;
+    if (yearsRaw == null || euro == null) return;
 
-    if (!aggregates[bucket]) aggregates[bucket] = { sum: 0, count: 0 };
-    aggregates[bucket].sum += euro;
-    aggregates[bucket].count += 1;
+    const year = Math.min(50, Math.max(1, Math.round(yearsRaw)));
+    const a = agg[year];
+    a.sum += euro;
+    a.sumSq += euro * euro;
+    a.count += 1;
   });
 
-  const order = ["0-2", "3-5", "6-10", "10+"];
   const labels = [];
-  const values = [];
+  const mean = [];
+  const lower = [];
+  const upper = [];
+  const counts = [];
 
-  order.forEach((b) => {
-    if (aggregates[b]) {
-      labels.push(b + " ans");
-      values.push(Math.round(aggregates[b].sum / aggregates[b].count));
-    }
-  });
+  for (let y = 1; y <= 50; y++) {
+    const a = agg[y];
+    if (a.count === 0) continue;
+
+    const m = a.sum / a.count;
+
+    // variance population approx: E[x^2] - (E[x])^2 (clamp pour éviter les -0)
+    const ex2 = a.sumSq / a.count;
+    const variance = Math.max(0, ex2 - m * m);
+    const sd = Math.sqrt(variance);
+
+    // SE = sd / sqrt(n), IC95% ~ mean ± 1.96*SE
+    const se = sd / Math.sqrt(a.count);
+    const ci95 = 1.96 * se;
+
+    labels.push(`${y} an${y > 1 ? "s" : ""}`);
+    mean.push(Math.round(m));
+    lower.push(Math.round(m - ci95));
+    upper.push(Math.round(m + ci95));
+    counts.push(a.count);
+  }
 
   const config = {
     type: "line",
     data: {
       labels,
-      datasets: [{
-        label: "Salaire moyen (€)",
-        data: values,
-        borderColor: colorPalettes.primary[0],
-        backgroundColor: colorPalettes.primary[0] + "30",
-        tension: 0.4,
-        fill: true,
-        borderWidth: 3,
-        pointRadius: 5,
-        pointHoverRadius: 7,
-        pointBackgroundColor: "#fff",
-        pointBorderWidth: 2
-      }]
+      datasets: [
+        // borne basse (invisible, sert de base au fill)
+        {
+          label: "IC95% (bas)",
+          data: lower,
+          borderColor: "rgba(0,0,0,0)",
+          pointRadius: 0
+        },
+        // borne haute (remplit jusqu'à la dataset précédente)
+        {
+          label: "IC95% (haut)",
+          data: upper,
+          borderColor: "rgba(0,0,0,0)",
+          pointRadius: 0,
+          fill: "-1", // fill entre upper et lower
+          backgroundColor: colorPalettes.primary[0] + "18"
+        },
+        // moyenne (celle demandée par le sujet)
+        {
+          label: "Salaire moyen (€)",
+          data: mean,
+          borderColor: colorPalettes.primary[0],
+          tension: 0.35,
+          borderWidth: 3,
+          fill: false,
+          // Points plus visibles quand n est faible (fiabilité)
+          pointRadius: (ctx) => {
+            const n = counts[ctx.dataIndex] ?? 0;
+            if (n < 5) return 5;
+            if (n < 15) return 3;
+            return 0; // sinon pas de points (courbe plus clean)
+          },
+          pointHoverRadius: 6,
+          pointBackgroundColor: "#fff",
+          pointBorderWidth: 2
+        }
+      ]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      interaction: { mode: "index", intersect: false },
       plugins: {
         legend: { display: false },
+        filler: { propagate: false }, // évite les remplissages non voulus
         tooltip: {
-          backgroundColor: "rgba(0, 0, 0, 0.8)",
-          padding: 12,
-          titleFont: { size: 14 },
-          bodyFont: { size: 13 },
           callbacks: {
-            label: (ctx) => `Salaire: ${ctx.parsed.y.toLocaleString("fr-FR")} €`
+            // on ne montre que le tooltip “utile” sur la moyenne
+            label: (ctx) => {
+              const i = ctx.dataIndex;
+              const n = counts[i] ?? 0;
+              const m = mean[i];
+              const lo = lower[i];
+              const up = upper[i];
+              // si on est sur une des 2 datasets IC, on masque
+              if (ctx.dataset.label?.startsWith("IC95%")) return null;
+              return [
+                `Salaire moyen : ${m.toLocaleString("fr-FR")} €`,
+                `n = ${n}`,
+                `IC95% : [${lo.toLocaleString("fr-FR")} ; ${up.toLocaleString("fr-FR")}] €`
+              ];
+            }
           }
         }
       },
       scales: {
+        x: {
+          grid: { display: false },
+          ticks: { maxTicksLimit: 10, color: "#94a3b8" }
+        },
         y: {
           beginAtZero: false,
-          grid: { color: "rgba(255, 255, 255, 0.05)" },
-          ticks: { color: "#94a3b8", callback: (v) => v.toLocaleString("fr-FR") + " €" }
-        },
-        x: { grid: { display: false }, ticks: { color: "#94a3b8" } }
+          grid: { color: "rgba(255,255,255,0.05)" },
+          ticks: {
+            color: "#94a3b8",
+            callback: (v) => v.toLocaleString("fr-FR") + " €"
+          }
+        }
       }
     }
   };

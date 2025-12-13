@@ -12,8 +12,6 @@ export async function loadData() {
     if (!res.ok) throw new Error(`HTTP ${res.status} (${DATA_URL})`);
     if (!res.body) throw new Error("Streaming non supporté par ce navigateur");
 
-    const totalBytes = Number(res.headers.get("Content-Length")) || 0;
-
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
 
