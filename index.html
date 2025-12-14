@@ -1,0 +1,226 @@
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StackOverflow 2023 – Analyse des Développeurs</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="header-content">
+      <h1>
+        📊 Visualisation StackOverflow 2025
+        <span class="badge">Projet BUT3 - Chart.js</span>
+      </h1>
+      <p>Analyse des revenus, compétences techniques et outils des développeurs en Europe et Amérique du Nord</p>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Filtres Globaux -->
+    <section class="filters-section">
+      <div class="filters-header">
+        <h2>
+          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+          </svg>
+          Filtres Globaux
+        </h2>
+        <div id="statusBadge" class="status-badge loading">
+          <span class="status-dot"></span>
+          <span id="statusText">Chargement...</span>
+        </div>
+      </div>
+
+      <div class="filters-grid">
+        <div class="filter-group">
+          <label class="filter-label" for="continentSelect">Continent</label>
+          <select id="continentSelect">
+            <option value="all">Tous les continents</option>
+            <option value="Europe">Europe</option>
+            <option value="North America">Amérique du Nord</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label class="filter-label" for="countrySelect">Pays</label>
+          <select id="countrySelect">
+            <option value="all">Tous les pays</option>
+          </select>
+        </div>
+
+    
+      </div>
+
+      <div class="info-box">
+        💡 <strong>Note:</strong> Les filtres ci-dessus s'appliquent à tous les graphiques. Des filtres supplémentaires spécifiques sont disponibles sur chaque graphique.
+      </div>
+    </section>
+
+    <!-- Section 1: Focus Revenus -->
+    <div class="section-header">
+      <h2>💰 Focus sur le Revenu Moyen</h2>
+      <p>Analyse des salaires en fonction de l'expérience et du niveau d'études</p>
+    </div>
+
+    <div class="charts-grid">
+      <!-- Chart 1: Revenu vs Expérience -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3 class="chart-title">Revenu moyen vs Expérience professionnelle</h3>
+          <p class="chart-subtitle">Évolution du salaire moyen (€) selon les années d'expérience (YearsCodePro / WorkExp)</p>
+        </div>
+        <div class="chart-container">
+          <canvas id="chartExperience"></canvas>
+        </div>
+      </div>
+
+      <!-- Chart 2: Revenu vs Éducation -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3 class="chart-title">Revenu moyen vs Niveau d'études</h3>
+          <p class="chart-subtitle">Comparaison des salaires selon le niveau d'études (EdLevel)</p>
+        </div>
+        <div class="chart-container">
+          <canvas id="chartEducation"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2: Compétences Techniques -->
+    <div class="section-header">
+      <h2>🔧 Focus sur les Compétences Techniques</h2>
+      <p>Impact des plateformes cloud et frameworks web sur le revenu</p>
+    </div>
+
+    <div class="charts-grid">
+      <!-- Chart 3: Revenu vs Cloud -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3 class="chart-title">Revenu moyen vs Plateformes Cloud</h3>
+          <p class="chart-subtitle">Top 10 des plateformes cloud (PlatformHaveWorkedWith) par revenu moyen</p>
+        </div>
+        <div class="chart-container">
+          <canvas id="chartCloud"></canvas>
+        </div>
+        <div class="chart-filters">
+          <div class="filter-group">
+            <label class="filter-label" for="cloudExpFilter">Filtrer par expérience</label>
+            <select id="cloudExpFilter">
+              <option value="all">Toutes</option>
+              <option value="0-5">0–5 ans</option>
+              <option value="5-10">5–10 ans</option>
+              <option value="11-15">11–15 ans</option>
+              <option value="16-20">16–20 ans</option>
+              <option value="21-30">21–30 ans</option>
+              <option value="31+">31+ ans</option>
+              </select>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Chart 4: Revenu vs Frameworks -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3 class="chart-title">Revenu moyen vs Frameworks Web</h3>
+          <p class="chart-subtitle">Top 10 des frameworks web (WebframeHaveWorkedWith) par revenu moyen</p>
+        </div>
+        <div class="chart-container">
+          <canvas id="chartWebframe"></canvas>
+        </div>
+        <div class="chart-filters">
+          <div class="filter-group">
+            <label class="filter-label" for="webframeExpFilter">Filtrer par expérience</label>
+            <select id="webframeExpFilter">
+              <option value="all">Toutes</option>
+              <option value="0-5">0–5 ans</option>
+              <option value="5-10">5–10 ans</option>
+              <option value="11-15">11–15 ans</option>
+              <option value="16-20">16–20 ans</option>
+              <option value="21-30">21–30 ans</option>
+              <option value="31+">31+ ans</option>
+            </select>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 3: Technologies Populaires -->
+    <div class="section-header">
+      <h2>⚡ Technologies les Plus Utilisées</h2>
+      <p>Systèmes d'exploitation et outils de communication par métier</p>
+    </div>
+
+    <!-- Filtres Section 3 (communs) -->
+    <div class="filters-section" style="margin-bottom: 1.5rem;">
+      <div class="filters-grid">
+        <div class="filter-group">
+          <label class="filter-label" for="devTypeSelect">Métier (DevType)</label>
+          <select id="devTypeSelect">
+            <option value="all">Tous les métiers</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="charts-grid">
+      <!-- Chart 5: Top OS -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3 class="chart-title">Top Systèmes d'Exploitation Professionnels</h3>
+          <p class="chart-subtitle">OS les plus utilisés au travail (OpSysProfessionaluse) selon le métier</p>
+        </div>
+        <div class="chart-container">
+          <canvas id="chartOS"></canvas>
+        </div>
+        <div class="chart-filters">
+        
+        <div class="filter-group">
+          <label class="filter-label" for="osTopN">Afficher le top</label>
+          <select id="osTopN">
+            <option value="5">Top 5</option>
+            <option value="6">Top 6</option>
+            <option value="7">Top 7</option>
+            <option value="8">Top 8</option>
+          </select>
+        </div>
+      </div>
+
+      </div>
+
+      <!-- Chart 6: Top Communication -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3 class="chart-title">Top Outils de Communication</h3>
+          <p class="chart-subtitle">Outils de communication les plus utilisés (CommunicationToolsHaveWorkedWith)</p>
+        </div>
+        <div class="chart-container">
+          <canvas id="chartComm"></canvas>
+        </div>
+        <div class="chart-filters">
+          
+
+          <div class="filter-group">
+            <label class="filter-label" for="commTopN">Afficher le top</label>
+            <select id="commTopN">
+              <option value="5">Top 5</option>
+              <option value="6">Top 6</option>
+              <option value="7">Top 7</option>
+              <option value="8">Top 8</option>
+            </select>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+    <script type="module" src="./js/main.js"></script>
+
+    
+</body>
+</html>
